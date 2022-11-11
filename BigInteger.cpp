@@ -11,6 +11,7 @@ class BigInteger {
         BigInteger();
         BigInteger(string bigIntStr);
         BigInteger(int number);
+        BigInteger(const BigInteger& other);
         void setInteger(string bigIntStr);
         const string& getInteger();   
         void setSign(bool sign);
@@ -22,18 +23,22 @@ class BigInteger {
         bool operator > (BigInteger other);
         BigInteger operator + (BigInteger other);
         BigInteger operator - (BigInteger other);
+        BigInteger operator * (BigInteger other);
+        BigInteger operator / (BigInteger other);
     private:
         BigInteger(string bigIntStr, bool sign);
         bool equals(BigInteger int1, BigInteger int2);
         bool lessThan(BigInteger int1, BigInteger int2);
         bool greaterThan(BigInteger int1, BigInteger int2);
         BigInteger add(BigInteger int1, BigInteger int2);
+        BigInteger multiply(BigInteger int1, BigInteger int2);
+        BigInteger divide(BigInteger int1, BigInteger int2);
 };
 
 int main() {
     //tests
     int i = 0;
-    while(i < 10) {
+    while(i < 3) {
         cout << "BigInt 1: ";
         string input1;
         string input2;
@@ -44,7 +49,7 @@ int main() {
         BigInteger int2(input2);
         cout << int1.getInteger() << " " << int1.getSign() << "\n";
         cout << int2.getInteger() << " " << int2.getSign() << "\n";
-        BigInteger intSum = int1 - int2;
+        BigInteger intSum = int1 / int2;
         cout << intSum.getInteger() << " " << intSum.getSign() << "\n";
         i++;
     }
@@ -63,6 +68,11 @@ BigInteger::BigInteger(string bigIntStr) {
 BigInteger::BigInteger(int number) {
     negative = number < 0;
     bigInt = to_string(abs(number));
+}
+
+BigInteger::BigInteger(const BigInteger& other) {
+    bigInt = other.bigInt;
+    negative = other.negative;
 }
 
 void BigInteger::setInteger(string bigIntStr) {
@@ -121,6 +131,14 @@ BigInteger BigInteger::operator + (BigInteger other) {
 BigInteger BigInteger::operator - (BigInteger other) {
     BigInteger temp(other.getInteger(), !other.getSign());
     return add(*this, temp);
+}
+
+BigInteger BigInteger::operator * (BigInteger other) {
+    return multiply(*this, other);
+}
+
+BigInteger BigInteger::operator / (BigInteger other) {
+    return divide(*this, other);
 }
 
 //private functions
@@ -241,6 +259,52 @@ BigInteger BigInteger::add(BigInteger int1, BigInteger int2) {
     return sum;
 }
 
+BigInteger BigInteger::multiply(BigInteger int1, BigInteger int2) {
+    bool finSign = (int1.getSign() == int2.getSign()) ?  false : true;
+    string s1 = int1.getInteger();
+    string s2 = int2.getInteger();
+    BigInteger product;
+    for(int i = s1.length() - 1; i > -1; i--) {
+        int carry = 0;
+        string temp = "";
+        for(int j = s1.length()-1; j > i; j--) temp += '0';
+        for(int j = s2.length()-1; j > -1; j--) {
+            int prod = ((s1[i] - '0') * (s2[j] - '0')) + carry;
+            temp += ((prod%10) + '0');
+            carry = prod/10;
+        }
+        if(carry > 0) temp += (carry + '0');
+        reverse(temp.begin(), temp.end());
+        BigInteger tempProd(temp, finSign);
+        product = product + tempProd;
+    }
+    return product;
+}
+
+BigInteger BigInteger::divide(BigInteger int1, BigInteger int2) {
+    if(int1.absoluteValue() < int2.absoluteValue()) return BigInteger(0);
+    bool finSign = (int1.getSign() == int2.getSign()) ? false : true;
+    string s1 = int1.getInteger();
+    string s2 = int2.getInteger();
+    string quotient = "";
+    int a = 0;
+    int b = s2.length();
+    BigInteger int2Abs(s2);
+    BigInteger temp((s1.substr(a,b)));
+    while(b <= s1.length()) {
+        BigInteger sum(s2);
+        int count;
+        for(count = 0; count < 10; count++) {
+            if(temp < sum) break;
+            sum = sum + int2Abs;
+        }
+        quotient += (count + '0');
+        a = b;
+        b++;
+        if(b <= s1.length()) temp.setInteger((temp-(sum-int2Abs)).getInteger() + s1[b-1]);
+    }
+    return BigInteger(quotient, finSign);
+}
 
 
 
