@@ -13,6 +13,7 @@ class BigInteger {
         BigInteger(int number);
         BigInteger(const BigInteger& other);
         void setInteger(string bigIntStr);
+        void setInteger(BigInteger int1);
         const string& getInteger();   
         void setSign(bool sign);
         const bool& getSign();
@@ -25,6 +26,11 @@ class BigInteger {
         BigInteger operator - (BigInteger other);
         BigInteger operator * (BigInteger other);
         BigInteger operator / (BigInteger other);
+        BigInteger operator % (BigInteger other);
+        void operator += (BigInteger other);
+        void operator -= (BigInteger other);
+        void operator *= (BigInteger other);
+        void operator /= (BigInteger other);
     private:
         BigInteger(string bigIntStr, bool sign);
         bool equals(BigInteger int1, BigInteger int2);
@@ -32,7 +38,8 @@ class BigInteger {
         bool greaterThan(BigInteger int1, BigInteger int2);
         BigInteger add(BigInteger int1, BigInteger int2);
         BigInteger multiply(BigInteger int1, BigInteger int2);
-        BigInteger divide(BigInteger int1, BigInteger int2);
+        BigInteger divide(BigInteger int1, BigInteger int2, bool mod);
+        BigInteger modulus(BigInteger int1, BigInteger int2);
 };
 
 int main() {
@@ -42,15 +49,20 @@ int main() {
         cout << "BigInt 1: ";
         string input1;
         string input2;
+        string input3;
         cin >> input1;
         BigInteger int1(input1);
         cout << "BigInt 2: ";
         cin >> input2;
         BigInteger int2(input2);
+        cout << "BigInt 3: ";
+        cin >> input3;
+        BigInteger int3(input3);
         cout << int1.getInteger() << " " << int1.getSign() << "\n";
         cout << int2.getInteger() << " " << int2.getSign() << "\n";
-        BigInteger intSum = int1 / int2;
-        cout << intSum.getInteger() << " " << intSum.getSign() << "\n";
+        cout << int3.getInteger() << " " << int3.getSign() << "\n";
+        int1 /= int2;
+        cout << int1.getInteger() << " " << int1.getSign() << "\n";
         i++;
     }
 }
@@ -89,6 +101,11 @@ void BigInteger::setInteger(string bigIntStr) {
         bigInt = "0";
         negative = false;
     }else bigInt = bigIntStr.substr(fin);
+}
+
+void BigInteger::setInteger(BigInteger int1) {
+    string temp = (int1.getSign()) ? "-" : "";
+    setInteger(temp + int1.getInteger());
 }
 
 const string& BigInteger::getInteger() {
@@ -138,7 +155,28 @@ BigInteger BigInteger::operator * (BigInteger other) {
 }
 
 BigInteger BigInteger::operator / (BigInteger other) {
-    return divide(*this, other);
+    return divide(*this, other, false);
+}
+
+BigInteger BigInteger::operator % (BigInteger other) {
+    return divide(*this, other, true);
+}
+
+void BigInteger::operator += (BigInteger other) {
+    setInteger(*this + other);
+}
+
+void BigInteger::operator -= (BigInteger other) {
+    BigInteger temp(other.getInteger(), !other.getSign());
+    setInteger(*this - other);
+}
+
+void BigInteger::operator *= (BigInteger other) {
+    setInteger(*this * other);
+}
+
+void BigInteger::operator /= (BigInteger other) {
+    setInteger(*this / other);
 }
 
 //private functions
@@ -281,7 +319,7 @@ BigInteger BigInteger::multiply(BigInteger int1, BigInteger int2) {
     return product;
 }
 
-BigInteger BigInteger::divide(BigInteger int1, BigInteger int2) {
+BigInteger BigInteger::divide(BigInteger int1, BigInteger int2, bool mod) {
     if(int1.absoluteValue() < int2.absoluteValue()) return BigInteger(0);
     bool finSign = (int1.getSign() == int2.getSign()) ? false : true;
     string s1 = int1.getInteger();
@@ -291,6 +329,7 @@ BigInteger BigInteger::divide(BigInteger int1, BigInteger int2) {
     int b = s2.length();
     BigInteger int2Abs(s2);
     BigInteger temp((s1.substr(a,b)));
+    BigInteger modInt;
     while(b <= s1.length()) {
         BigInteger sum(s2);
         int count;
@@ -298,13 +337,19 @@ BigInteger BigInteger::divide(BigInteger int1, BigInteger int2) {
             if(temp < sum) break;
             sum = sum + int2Abs;
         }
+        if(b == s1.length()) modInt = (finSign) ? sum - temp : sum - int2Abs - temp;
         quotient += (count + '0');
         a = b;
         b++;
         if(b <= s1.length()) temp.setInteger((temp-(sum-int2Abs)).getInteger() + s1[b-1]);
     }
+    if(mod) {
+        modInt.setSign(int2.getSign());
+        return modInt;
+    }
     return BigInteger(quotient, finSign);
 }
+
 
 
 
